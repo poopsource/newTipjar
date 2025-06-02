@@ -119,7 +119,9 @@ async function analyzeImage(imageBase64) {
       } else if (response.status === 429) {
         return {
           text: null,
-          error: `Gemini API quota exceeded. Please try again later or check your API key limits.`
+          error: `The OCR service is temporarily unavailable due to high demand. Please try:\n1. Wait a minute and try again\n2. Use the manual entry option\n3. If the issue persists, contact support`,
+          suggestManualEntry: true,
+          retryAfter: response.headers.get('retry-after') || '60'
         };
       }
       
@@ -241,10 +243,17 @@ export default async function handler(req, res) {
     
     if (!result.text) {
       console.error("Gemini API error:", result.error);
-      return res.status(500).json({ 
+      const response = {
         error: result.error || "Failed to extract text from image",
-        suggestManualEntry: true
-      });
+        suggestManualEntry: result.suggestManualEntry || true
+      };
+      
+      // If rate limited, include retry information
+      if (result.retryAfter) {
+        response.retryAfter = result.retryAfter;
+      }
+      
+      return res.status(result.retryAfter ? 429 : 500).json(response);
     }
     
     // Parse extracted text to get partner hours
