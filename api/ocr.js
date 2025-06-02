@@ -117,17 +117,9 @@ async function analyzeImage(imageBase64) {
           error: `Authentication error. Your Gemini API key may be invalid or missing Vision API permissions.`
         };
       } else if (response.status === 429) {
-        const retryAfter = response.headers.get('retry-after') || '60';
-        const now = new Date();
-        const pacificTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
-        const hoursUntilMidnight = 24 - pacificTime.getHours();
-        
         return {
           text: null,
-          error: `Rate limit reached. You can:\n1. Wait ${retryAfter} seconds for the per-minute quota to reset\n2. Wait ${hoursUntilMidnight} hours for the daily quota to reset at midnight PT\n3. Use manual entry in the meantime`,
-          suggestManualEntry: true,
-          retryAfter,
-          quotaResetTime: hoursUntilMidnight
+          error: `Gemini API quota exceeded. Please try again later or check your API key limits.`
         };
       }
       
@@ -249,18 +241,10 @@ export default async function handler(req, res) {
     
     if (!result.text) {
       console.error("Gemini API error:", result.error);
-      const response = {
+      return res.status(500).json({ 
         error: result.error || "Failed to extract text from image",
-        suggestManualEntry: result.suggestManualEntry || true
-      };
-      
-      // Include quota reset information if available
-      if (result.retryAfter) {
-        response.retryAfter = result.retryAfter;
-        response.quotaResetTime = result.quotaResetTime;
-      }
-      
-      return res.status(result.retryAfter ? 429 : 500).json(response);
+        suggestManualEntry: true
+      });
     }
     
     // Parse extracted text to get partner hours
