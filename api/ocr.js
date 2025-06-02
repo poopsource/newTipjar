@@ -117,11 +117,17 @@ async function analyzeImage(imageBase64) {
           error: `Authentication error. Your Gemini API key may be invalid or missing Vision API permissions.`
         };
       } else if (response.status === 429) {
+        const retryAfter = response.headers.get('retry-after') || '60';
+        const now = new Date();
+        const pacificTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+        const hoursUntilMidnight = 24 - pacificTime.getHours();
+        
         return {
           text: null,
-          error: `The OCR service is temporarily unavailable due to high demand. Please try:\n1. Wait a minute and try again\n2. Use the manual entry option\n3. If the issue persists, contact support`,
+          error: `Rate limit reached. You can:\n1. Wait ${retryAfter} seconds for the per-minute quota to reset\n2. Wait ${hoursUntilMidnight} hours for the daily quota to reset at midnight PT\n3. Use manual entry in the meantime`,
           suggestManualEntry: true,
-          retryAfter: response.headers.get('retry-after') || '60'
+          retryAfter,
+          quotaResetTime: hoursUntilMidnight
         };
       }
       
@@ -248,9 +254,10 @@ export default async function handler(req, res) {
         suggestManualEntry: result.suggestManualEntry || true
       };
       
-      // If rate limited, include retry information
+      // Include quota reset information if available
       if (result.retryAfter) {
         response.retryAfter = result.retryAfter;
+        response.quotaResetTime = result.quotaResetTime;
       }
       
       return res.status(result.retryAfter ? 429 : 500).json(response);
