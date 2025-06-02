@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server/index.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "client/dist",
+        "buildCommand": "npm run build:vercel"
+      }
+    }
+  ],
+  "functions": {
+    "api/ocr.js": {
+      "maxDuration": 30
+    },
+    "api/partners.js": {
+       "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/ocr",
+      "destination": "/api/ocr.js"
+    },
+    {
+      "source": "/api/partners",
+      "destination": "/api/partners.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/server/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

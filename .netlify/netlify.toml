@@ -1,0 +1,60 @@
+redirectsOrigin = "config"
+plugins = []
+functionsDirectory = "C:\\TipJarPro (1)\\TipJarPro\\dist"
+functionsDirectoryOrigin = "config"
+headers = []
+
+[functions]
+
+[functions.index]
+memory = 1024.0
+
+[functions."*"]
+included_files = ["*.json", "*.js", "*.ts"]
+node_bundler = "esbuild"
+
+[build]
+publish = "C:\\TipJarPro (1)\\TipJarPro\\dist\\public"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build"
+base = "C:\\TipJarPro (1)\\TipJarPro"
+functions = "C:\\TipJarPro (1)\\TipJarPro\\dist"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/index/:splat"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
